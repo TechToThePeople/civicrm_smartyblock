@@ -1,0 +1,53 @@
+<?php
+
+
+/**
+ * Implements hook_block_info()
+ */
+function civicrm_smartyblock_block_info() {
+
+  civicrm_initialize();
+  $blocks = array();
+  require_once 'CRM/Core/Smarty.php';
+  foreach (CRM_Core_Smarty::singleton()->template_dir as $dir) {
+    if (!empty($dir)) {
+      $dir .= '/CRM/Block/auto/';
+      $dir = strtr($dir, '//', '/');
+      if (is_dir($dir)) {
+        foreach (scandir($dir) as $candidate) {
+          if (preg_match('#^([a-z][a-z0-9\-]*)\.tpl$#', $candidate, $m)) {
+            $file = $dir . $candidate;
+            if (is_file($file)) {
+              $key = $m[1];
+              $blocks[$key] = array(
+                'info' => "$key - CiviCRM SmartyBlock",
+                'cache' => DRUPAL_NO_CACHE,
+              );
+            }
+          }
+        }
+      }
+    }
+  }
+  return $blocks;
+}
+
+
+/**
+ * Implements hook_block_view()
+ */
+function civicrm_smartyblock_block_view($delta = '') {
+  civicrm_initialize();
+  foreach (CRM_Core_Smarty::singleton()->template_dir as $dir) {
+    if (!empty($dir)) {
+      $dir .= '/CRM/Block/auto/';
+      $dir = strtr($dir, '//', '/');
+      $file = $dir . '/' . $delta . '.tpl';
+      if (is_file($file)) {
+        civicrm_initialize();
+        $html = CRM_Core_Smarty::singleton()->fetch($file);
+        return array('content' => $html);
+      }
+    }
+  }
+}
